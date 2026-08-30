@@ -1,0 +1,25 @@
+order_schema = {
+    "type": "object",
+    "required": [
+        "id",
+        "candidate_id",
+        "instrument_id",
+        "side",
+        "type",
+        "quantity",
+        "price",
+        "status",
+        "created_at",
+    ],
+    "properties": {
+        "id": {"type": "integer"},
+        "candidate_id": {"type": "string"},
+        "instrument_id": {"type": "integer"},
+        "side": {"type": "string", "enum": ["BUY", "SELL"]},
+        "type": {"type": "string", "enum": ["MARKET", "LIMIT"]},
+        "quantity": {"type": "integer", "exclusiveMinimum": 0},
+        "price": {"type": "number", "exclusiveMinimum": 0},
+        "status": {"type": "string", "enum": ["FILLED", "PENDING", "REJECTED"]},
+        "created_at": {"type": "string"},
+    },
+}
