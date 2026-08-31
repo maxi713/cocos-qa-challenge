@@ -30,6 +30,7 @@ def test_market_buy_order_is_filled_immediately(orders_service):
     assert response.body["quantity"] == 10
 
 
+@pytest.mark.regression
 def test_market_buy(orders_service, portfolio_service):
     portfolio = portfolio_service.get_portfolio()
 
@@ -45,6 +46,7 @@ def test_market_buy(orders_service, portfolio_service):
     assert portfolio_after.body["holdings"][0]["quantity"] == 10
 
 
+@pytest.mark.regression
 def test_market_sell(
     orders_service, portfolio_service, portfolio_with_existing_holding
 ):
@@ -66,6 +68,7 @@ def test_market_sell(
     )
 
 
+@pytest.mark.regression
 def test_limit_buy_order_is_pending(orders_service):
     response = orders_service.create_order(
         instrument_id=1, side="BUY", order_type="LIMIT", quantity=6, price=30.0
@@ -90,6 +93,7 @@ _LIMIT_PENDING_SKIP_REASON = (
 )
 
 
+@pytest.mark.regression
 @pytest.mark.skip(reason=_LIMIT_PENDING_SKIP_REASON)
 def test_limit_buy_reserves_cash_while_pending(orders_service, portfolio_service):
     portfolio = portfolio_service.get_portfolio()
@@ -107,6 +111,7 @@ def test_limit_buy_reserves_cash_while_pending(orders_service, portfolio_service
     assert portfolio_after.body["holdings"] == portfolio.body["holdings"]
 
 
+@pytest.mark.regression
 @pytest.mark.skip(reason=_LIMIT_PENDING_SKIP_REASON)
 def test_limit_sell_reserves_holdings_while_pending(
     orders_service, portfolio_service, portfolio_with_existing_holding
@@ -135,6 +140,7 @@ _LIMIT_RESOLUTION_SKIP_REASON = (
 )
 
 
+@pytest.mark.regression
 @pytest.mark.skip(reason=_LIMIT_RESOLUTION_SKIP_REASON)
 def test_limit_buy_order_resolves_to_filled(orders_service, portfolio_service):
     portfolio = portfolio_service.get_portfolio()
@@ -153,6 +159,7 @@ def test_limit_buy_order_resolves_to_filled(orders_service, portfolio_service):
     assert portfolio_after.body["holdings"][0]["quantity"] == resolved["quantity"]
 
 
+@pytest.mark.regression
 @pytest.mark.skip(reason=_LIMIT_RESOLUTION_SKIP_REASON)
 def test_limit_buy_order_resolves_to_rejected(orders_service, portfolio_service):
     portfolio = portfolio_service.get_portfolio()
@@ -169,6 +176,7 @@ def test_limit_buy_order_resolves_to_rejected(orders_service, portfolio_service)
     assert portfolio_after.body["holdings"] == portfolio.body["holdings"]
 
 
+@pytest.mark.negative
 @pytest.mark.parametrize(
     "instrument_id, side, order_type, quantity, price, expected_error",
     [
@@ -178,8 +186,20 @@ def test_limit_buy_order_resolves_to_rejected(orders_service, portfolio_service)
         (1, "HOLD", "MARKET", 1, None, "side must be BUY or SELL"),
         (1, "BUY", "STOP", 1, None, "type must be MARKET or LIMIT"),
         (99999, "BUY", "MARKET", 1, None, "Instrument not found"),
-        (1, "BUY", "LIMIT", 1, 0, "TODO: confirm real message once Bug 4 is fixed"),
-        (1, "BUY", "LIMIT", 1, -10, "TODO: confirm real message once Bug 4 is fixed"),
+        pytest.param(
+            1, "BUY", "LIMIT", 1, 0, "TODO: confirm real message once Bug 4 is fixed",
+            marks=pytest.mark.xfail(
+                reason="Bug 4: LIMIT acepta price <= 0 en vez de dar 400",
+                strict=True,
+            ),
+        ),
+        pytest.param(
+            1, "BUY", "LIMIT", 1, -10, "TODO: confirm real message once Bug 4 is fixed",
+            marks=pytest.mark.xfail(
+                reason="Bug 4: LIMIT acepta price <= 0 en vez de dar 400",
+                strict=True,
+            ),
+        ),
     ],
     ids=[
         "zero_quantity",
@@ -207,6 +227,7 @@ def test_create_order_with_invalid_fields(
     assert response.body["error"] == expected_error
 
 
+@pytest.mark.negative
 @pytest.mark.parametrize(
     "payload",
     [
@@ -236,6 +257,7 @@ def test_get_orders_returns_the_created_order(orders_service):
     assert response.body[0] == created_order
 
 
+@pytest.mark.negative
 def test_sell_without_holdings(orders_service):
     response = orders_service.create_order(
         instrument_id=1, side="SELL", order_type="MARKET", quantity=1
@@ -245,6 +267,7 @@ def test_sell_without_holdings(orders_service):
     assert response.body["error"] == "Insufficient shares"
 
 
+@pytest.mark.negative
 def test_buy_without_enough_cash(orders_service):
     response = orders_service.create_order(
         instrument_id=1, side="BUY", order_type="MARKET", quantity=999999999
@@ -254,6 +277,7 @@ def test_buy_without_enough_cash(orders_service):
     assert response.body["error"] == "Insufficient cash"
 
 
+@pytest.mark.negative
 def test_create_order_without_candidate_id(orders_service):
     response = orders_service.create_order(
         instrument_id=1,
@@ -266,6 +290,7 @@ def test_create_order_without_candidate_id(orders_service):
     assert response.status_code == 400
 
 
+@pytest.mark.negative
 @pytest.mark.parametrize(
     "bugs_tier_header", [None, "algo_random"], ids=["missing", "invalid"]
 )
@@ -281,6 +306,7 @@ def test_create_order_with_invalid_bugs_tier(orders_service, bugs_tier_header):
     assert response.status_code == 400
 
 
+@pytest.mark.regression
 def test_market_order_ignores_submitted_price(orders_service, instruments_service):
     real_price = next(
         i for i in instruments_service.get_instruments().body if i["id"] == 1
@@ -294,6 +320,7 @@ def test_market_order_ignores_submitted_price(orders_service, instruments_servic
     assert response.body["price"] == real_price
 
 
+@pytest.mark.regression
 @pytest.mark.skip(reason=_LIMIT_PENDING_SKIP_REASON)
 def test_limit_buy_orders_cumulative_reservation_exceeds_cash(orders_service):
     first_order = orders_service.create_order(
