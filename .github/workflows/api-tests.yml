@@ -28,6 +28,8 @@ jobs:
       - run: |
           pytest --bugs-tier=${{ matrix.bugs-tier }} \
             --html=report-${{ matrix.bugs-tier }}.html --self-contained-html
+        env:
+          CANDIDATE_ID: maxi-ci-${{ matrix.bugs-tier }}
 
       - uses: actions/upload-artifact@v4
         if: always()
