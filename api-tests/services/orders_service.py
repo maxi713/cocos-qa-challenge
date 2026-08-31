@@ -17,6 +17,12 @@ class OrdersService:
         if price is not None:
             payload["price"] = price
 
+        return self._post_order(payload, headers)
+
+    def create_order_with_payload(self, payload, headers=None):
+        return self._post_order(payload, headers)
+
+    def _post_order(self, payload, headers=None):
         response = self.client.post("/orders", payload, headers=headers)
         return ApiResponse(response)
 
