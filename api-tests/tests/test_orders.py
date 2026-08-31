@@ -180,37 +180,18 @@ def test_limit_buy_order_resolves_to_rejected(orders_service, portfolio_service)
 @pytest.mark.parametrize(
     "instrument_id, side, order_type, quantity, price, expected_error",
     [
-        pytest.param(
-            1, "BUY", "MARKET", 0, None, "quantity must be a positive number",
-            id="zero_quantity",
-        ),
-        pytest.param(
-            1, "BUY", "MARKET", -1, None, "quantity must be a positive number",
-            id="negative_quantity",
-        ),
-        pytest.param(
-            1, "BUY", "MARKET", 1.5, None, "quantity must be a positive integer",
-            id="fractional_quantity",
-        ),
-        pytest.param(
-            1, "HOLD", "MARKET", 1, None, "side must be BUY or SELL",
-            id="invalid_side",
-        ),
-        pytest.param(
-            1, "BUY", "STOP", 1, None, "type must be MARKET or LIMIT",
-            id="invalid_type",
-        ),
-        pytest.param(
-            99999, "BUY", "MARKET", 1, None, "Instrument not found",
-            id="nonexistent_instrument",
-        ),
+        (1, "BUY", "MARKET", 0, None, "quantity must be a positive number"),
+        (1, "BUY", "MARKET", -1, None, "quantity must be a positive number"),
+        (1, "BUY", "MARKET", 1.5, None, "quantity must be a positive integer"),
+        (1, "HOLD", "MARKET", 1, None, "side must be BUY or SELL"),
+        (1, "BUY", "STOP", 1, None, "type must be MARKET or LIMIT"),
+        (99999, "BUY", "MARKET", 1, None, "Instrument not found"),
         pytest.param(
             1, "BUY", "LIMIT", 1, 0, "TODO: confirm real message once Bug 4 is fixed",
             marks=pytest.mark.xfail(
                 reason="Bug 4: LIMIT acepta price <= 0 en vez de dar 400",
                 strict=True,
             ),
-            id="zero_price",
         ),
         pytest.param(
             1, "BUY", "LIMIT", 1, -10, "TODO: confirm real message once Bug 4 is fixed",
@@ -218,8 +199,17 @@ def test_limit_buy_order_resolves_to_rejected(orders_service, portfolio_service)
                 reason="Bug 4: LIMIT acepta price <= 0 en vez de dar 400",
                 strict=True,
             ),
-            id="negative_price",
         ),
+    ],
+    ids=[
+        "zero_quantity",
+        "negative_quantity",
+        "fractional_quantity",
+        "invalid_side",
+        "invalid_type",
+        "nonexistent_instrument",
+        "zero_price",
+        "negative_price",
     ],
 )
 def test_create_order_with_invalid_fields(
