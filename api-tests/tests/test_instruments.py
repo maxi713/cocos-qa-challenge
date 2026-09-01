@@ -1,8 +1,6 @@
 import pytest
-from assertions.instrument_assertions import (
-    assert_instruments_list_schema,
-    assert_unique_field,
-)
+from assertions.common_assertions import assert_unique_field
+from assertions.instrument_assertions import assert_instruments_list_schema
 
 
 @pytest.fixture(scope="session")
