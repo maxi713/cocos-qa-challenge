@@ -187,16 +187,16 @@ def test_limit_buy_order_resolves_to_rejected(orders_service, portfolio_service)
         (1, "BUY", "STOP", 1, None, "type must be MARKET or LIMIT"),
         (99999, "BUY", "MARKET", 1, None, "Instrument not found"),
         pytest.param(
-            1, "BUY", "LIMIT", 1, 0, "TODO: confirm real message once Bug 4 is fixed",
+            1, "BUY", "LIMIT", 1, 0, "TODO: confirm real message once Bug 3 is fixed",
             marks=pytest.mark.xfail(
-                reason="Bug 4: LIMIT acepta price <= 0 en vez de dar 400",
+                reason="Bug 3: LIMIT acepta price <= 0 en vez de dar 400",
                 strict=True,
             ),
         ),
         pytest.param(
-            1, "BUY", "LIMIT", 1, -10, "TODO: confirm real message once Bug 4 is fixed",
+            1, "BUY", "LIMIT", 1, -10, "TODO: confirm real message once Bug 3 is fixed",
             marks=pytest.mark.xfail(
-                reason="Bug 4: LIMIT acepta price <= 0 en vez de dar 400",
+                reason="Bug 3: LIMIT acepta price <= 0 en vez de dar 400",
                 strict=True,
             ),
         ),
