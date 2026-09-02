@@ -1,10 +1,10 @@
 # Reporte de hallazgos — Cocos QA Challenge
 
-Encontré 7 bugs reproducibles. Para cada uno: pasos, esperado vs. obtenido, severidad y evidencia.
+Encontré 9 bugs reproducibles. Para cada uno: pasos, esperado vs. obtenido, severidad y evidencia.
 
-Severidad: **Crítica** (dinero mal contabilizado), **Alta** (rompe una regla de negocio o hay datos inconsistentes entre endpoints), **Media** (contrato HTTP o UX). Aclaración: 6 de los 7 solo aparecen con `X-Enable-Bugs` en `easy`/`medium`/`hard` (son defectos simulados por la propia API para el challenge). La severidad asume que esto pasara en un sistema real, no mide qué tan expuesto está acá.
+Severidad: **Crítica** (dinero mal contabilizado), **Alta** (rompe una regla de negocio o hay datos inconsistentes entre endpoints), **Media** (contrato HTTP o UX). Aclaración: 6 de los 9 solo aparecen con `X-Enable-Bugs` en `easy`/`medium`/`hard` (son defectos simulados por la propia API para el challenge). La severidad asume como si esto pasara en un sistema real.
 
-El **Bug 3** es la excepción: aparece incluso con `off`, sin ningún flag prendido. Es el único 100% real de los 7.
+Los **Bugs 3, 8 y 9** son la excepción: aparecen incluso con `off`, sin ningún flag prendido (el 9 ni siquiera depende de la API, es un tema de UI). Son los tres 100% reales de los nueve.
 
 ---
 
@@ -21,7 +21,7 @@ curl -H "X-Enable-Bugs: easy" -H "X-Candidate-Id: <cualquiera>" https://dummy-ap
 
 **Obtenido:** `last_price: 0` para ese instrumento puntual.
 
-**Evidencia:** reproducible en `easy`, `medium` y `hard`. Con `off` el valor es correcto siempre. El resto de los 26 instrumentos no se ven afectados. Además, notamos que `/search?query=MIRG` sí devuelve un `last_price` con sentido para ese mismo instrumento, al mismo tiempo y con el mismo tier: el mismo valor que da `off` (`40.88`). Apunta a que el problema está puntualmente en cómo `/instruments` arma su respuesta, no en el dato de precio en sí: dos endpoints que deberían leer la misma fuente están en desacuerdo.
+**Evidencia:** reproducible en `easy`, `medium` y `hard`. Con `off` el valor es correcto siempre. El resto de los 26 instrumentos no se ven afectados. Además, noté que `/search?query=MIRG` sí devuelve un `last_price` con sentido para ese mismo instrumento, al mismo tiempo y con el mismo tier: el mismo valor que da `off` (`40.88`). Apunta a que el problema está puntualmente en cómo `/instruments` arma su respuesta, no en el dato de precio en sí: dos endpoints que deberían leer la misma fuente están en desacuerdo.
 
 ---
 
@@ -38,7 +38,7 @@ curl -H "X-Enable-Bugs: easy" -H "X-Candidate-Id: <cualquiera>" "https://dummy-a
 
 **Obtenido:** devuelve `[]`, no encuentra nada. Buscas `DYCA` en mayúsculas, o un substring en mayúsculas (`DYC`), sigue funcionando bien; solo deja de encontrar resultados con minúsculas o mezcla de mayúsculas/minúsculas.
 
-**Evidencia:** probé varios de los tickers de la API en minúscula contra los 4 tiers. Bajo `off`: pude encontrar su instrumento. Bajo `easy`/`medium`/`hard`: ninguno matchea. No es un caso aislado, es un comportamiento global del endpoint.
+**Evidencia:** probé varios de los tickers de la API en minúscula contra los 4 tiers. Bajo `off`: pude encontrar los instrumentos. Bajo `easy`/`medium`/`hard`: ninguno matchea.
 
 ---
 
@@ -59,7 +59,7 @@ curl -X POST -H "X-Enable-Bugs: off" -H "X-Candidate-Id: <cualquiera>" -H "Conte
 
 **Evidencia:** a diferencia de los otros bugs, este pasa **siempre**, incluso con `X-Enable-Bugs: off`. No depende del tier. Probado con `price: 0` y `price: -10`, mismo resultado en ambos.
 
-Utilizando el servicio de porfolio tambien encontre que con el `cash` mientras la orden está `PENDING`: con `price: -10` y `quantity: 100`, el `cash` sube de `1.000.000` a `1.001.000` apenas se crea la orden, la reserva se calcula como `quantity × price` (`100 × -10 = -1000`) y en vez de restarle eso al cash, se lo suma. Un segundo después la orden resuelve a `REJECTED` (tiene sentido: un LIMIT BUY con precio negativo nunca puede llenar) y el `cash` vuelve a `1.000.000`. O sea que no es dinero que quede generado de forma permanente, pero sí hay una ventana real, aunque corta, en la que el balance que devuelve la API está mal.
+Utilizando el servicio de porfolio tambien encontre que con el `cash` mientras la orden está `PENDING`: con `price: -10` y `quantity: 100`, el `cash` sube de `1.000.000` a `1.001.000` apenas se crea la orden. Un segundo después la orden resuelve a `REJECTED` (tiene sentido: un LIMIT BUY con precio negativo nunca puede llenar) y el `cash` vuelve a `1.000.000`. No es dinero que quede generado de forma permanente, pero sí hay una pequeña ventana donde se podría ver incorrecto el balance.
 
 ---
 
@@ -78,7 +78,7 @@ curl -i -X POST -H "X-Enable-Bugs: medium" -H "X-Candidate-Id: <cualquiera>" -H 
 
 **Obtenido:** `200 OK`. El body de la respuesta viene perfecto (mismos campos, mismo `status: FILLED`, precio correcto). Es únicamente el código de estado HTTP el que está mal.
 
-**Evidencia:** repetí la misma orden 10 veces bajo `medium`, las 10 dieron `200`. Bajo `off`/`easy` siempre da `201`. Afecta tanto a MARKET como a LIMIT. Cualquier cliente que valide estrictamente el código de estado (en vez de solo mirar el body) va a fallar acá sin motivo real.
+**Evidencia:** Bajo `off`/`easy` siempre da `201`. Afecta tanto a MARKET como a LIMIT. Cualquier cliente que valide estrictamente el código de estado (en vez de solo mirar el body) va a fallar acá sin motivo real.
 
 ---
 
@@ -142,3 +142,36 @@ curl -X POST -H "X-Enable-Bugs: medium" -H "X-Candidate-Id: <cualquiera>" -H "Co
 **Obtenido:** en algunas corridas, `/portfolio` sigue mostrando la cantidad de **antes** de vender.
 
 **Evidencia:** no es reproducible en el 100% de los intentos: corriendo la secuencia 10 veces bajo `hard`, la variante 2 falló 1 de 10 veces; 10/10 salió bien bajo `off`. Encontré la variante 1 corriendo la suite completa repetidas veces contra `hard`, no fue algo que hubiera anticipado al diseñar los casos. Parece que el problema se da solo bajo ese tier, no algo específico de un endpoint: aparece tanto en `/orders` como en `/portfolio`.
+
+---
+
+## Bug 8 — `GET /instruments` incluye la moneda base (ARS) mezclada con las acciones, y se puede operar como si fuera una
+
+**Severidad:** Alta
+
+**Pasos para reproducir:**
+```bash
+curl -H "X-Enable-Bugs: off" -H "X-Candidate-Id: <cualquiera>" https://dummy-api-topaz.vercel.app/instruments
+```
+
+**Esperado:** la lista debería traer solo instrumentos operables de verdad (acciones), no la moneda con la que se paga.
+
+**Obtenido:** el instrumento 26 (`ticker: "ARS"`, `type: "MONEDA"`, `last_price: 1` fijo) aparece mezclado con las 26 acciones, sin ningún flag prendido. La app no filtra por `type` en ningún lado (ni en Mercados, ni en Buscar, ni en el formulario de orden), así que se puede buscar, ver el detalle, y comprar/vender ARS exactamente igual que cualquier acción.
+
+**Evidencia:** reproducible bajo `off`, no depende de ningún tier. Probé comprar de verdad: reseteé la cuenta y compré 100 ARS por MARKET, y quedó como holding en el portafolio (`{"instrument_id":26,"ticker":"ARS","quantity":100,"avg_cost_price":1}`), igual que cualquier acción. No genera ni destruye plata (el precio está fijo en 1, comprar/vender ARS es económicamente neutro), pero no tiene sentido de negocio: termina dejando "comprar" la moneda con la que estás pagando.
+
+---
+
+## Bug 9 — La barra de navegación inferior tapa el último instrumento de la lista de Mercados
+
+**Severidad:** Media
+
+**Pasos para reproducir:**
+1. Ir a la pestaña Mercados.
+2. Scrollear hasta el final de la lista de instrumentos.
+
+**Esperado:** debería poder ver (y tocar) el último instrumento de la lista sin que nada lo tape.
+
+**Obtenido:** la barra de navegación inferior (Mercados/Portafolio/Órdenes/Buscar) queda fija encima del contenido, y el último ítem de la lista termina parcial o totalmente tapado detrás de ella.
+
+**Evidencia:** se ve a simple vista con los 26 instrumentos actuales. No depende de ningún tier de bugs, es un tema de layout: a la lista le falta padding/inset abajo para no meterse debajo de la tab bar. Con una lista más larga (como sería en una app real) el problema es el mismo, siempre el último ítem se va a comer la barra.
