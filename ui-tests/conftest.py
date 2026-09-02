@@ -8,12 +8,18 @@ from appium.webdriver.common.appiumby import AppiumBy
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from pages.orders_ticket_page import OrdersTicketPage
+from pages.search_page import SearchPage
+
 APPIUM_SERVER_URL = "http://127.0.0.1:4723"
 APP_PACKAGE = "com.cocos.trading"
 APP_ACTIVITY = ".MainActivity"
 
 API_URL = "https://dummy-api-topaz.vercel.app"
 CANDIDATE_ID = "maxi2161"
+
+DYCA_TICKER = "DYCA"
+DYCA_QUANTITY = 1
 
 
 @pytest.fixture()
@@ -50,3 +56,17 @@ def driver():
     )
     yield drv
     drv.quit()
+
+
+@pytest.fixture()
+def bought_dyca(reset_state, driver):
+    search_page = SearchPage(driver)
+    search_page.open()
+    search_page.search(DYCA_TICKER)
+    search_page.result_row(DYCA_TICKER).click()
+
+    ticket_page = OrdersTicketPage(driver)
+    ticket_page.set_quantity(DYCA_QUANTITY)
+    ticket_page.submit()
+    ticket_page.wait_for_result()
+    ticket_page.dismiss()

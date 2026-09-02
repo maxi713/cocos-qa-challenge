@@ -10,6 +10,14 @@ RETORNO_TITLE = (AppiumBy.XPATH, '//*[@text="Retorno"]')
 COSTO_INVERTIDO_TITLE = (AppiumBy.XPATH, '//*[@text="Costo invertido"]')
 EFECTIVO_TITLE = (AppiumBy.XPATH, '//*[@text="Efectivo"]')
 POSICIONES_TITLE = (AppiumBy.XPATH, '(//*[@text="Posiciones"])[1]')
+EMPTY_STATE_TITLE = (
+    AppiumBy.XPATH,
+    '//*[@text="No hay posiciones en el portfolio"]',
+)
+EMPTY_STATE_DESCRIPTION = (
+    AppiumBy.XPATH,
+    '//*[@text="Cuando la API devuelva tenencias, van a aparecer en esta lista."]',
+)
 
 
 class PortfolioPage(BasePage):
@@ -37,3 +45,16 @@ class PortfolioPage(BasePage):
 
     def posiciones_label(self):
         return self.wait_visible(POSICIONES_TITLE)
+
+    def empty_state_title(self):
+        return self.wait_visible(EMPTY_STATE_TITLE)
+
+    def empty_state_description(self):
+        return self.wait_visible(EMPTY_STATE_DESCRIPTION)
+
+    def position_row(self, ticker, quantity):
+        locator = (
+            AppiumBy.XPATH,
+            f'//*[starts-with(@content-desc, "{ticker}, cantidad {quantity}")]',
+        )
+        return self.wait_visible(locator)

@@ -25,3 +25,10 @@ class MarketsPage(BasePage):
 
     def bajan_label(self):
         return self.wait_visible(BAJAN_TITLE)
+
+    def first_instrument_row(self):
+        locator = (
+            AppiumBy.XPATH,
+            '(//*[contains(@content-desc, "ultimo precio")])[1]',
+        )
+        return self.wait_visible(locator)
