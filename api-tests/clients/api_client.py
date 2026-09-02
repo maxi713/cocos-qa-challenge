@@ -6,10 +6,6 @@ logger = get_logger(__name__)
 
 
 class ApiClient:
-    """Wraps a requests.Session with X-Enable-Bugs/X-Candidate-Id as session-level
-    defaults. Pass headers={"X-Candidate-Id": None} on a call to drop a default
-    header for that single request (used by negative header tests)."""
-
     def __init__(self, base_url=None, candidate_id=None, bugs_tier=None):
         self.base_url = base_url or BASE_URL
         self.session = requests.Session()
