@@ -32,6 +32,7 @@ venv\Scripts\activate          # Windows
 pip install -r requirements.txt
 cp .env.example .env           # ya viene con valores que andan
 ```
+Si preferís usar tu propio `CANDIDATE_ID` en vez del que ya viene, cambialo en ese `.env` — es un string libre, no hace falta que sea uno real.
 
 **Correr todo:**
 ```bash
